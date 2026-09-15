@@ -11,28 +11,32 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v5
+        uses: actions/checkout@v4
 
       - name: Set up JDK 17
-        uses: actions/setup-java@v5
+        uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
           java-version: '17'
 
-      # 关键：将 JDK 17 的路径写入 GITHUB_PATH，确保 sdkmanager 也能用
-      - name: Set JAVA_HOME and PATH for JDK 17
+      # 关键：强制 sdkmanager 使用 JDK 17，并加入 PATH
+      - name: Configure Android SDK environment
         run: |
           echo "JAVA_HOME=$JAVA_HOME_17_X64" >> $GITHUB_ENV
           echo "$JAVA_HOME_17_X64/bin" >> $GITHUB_PATH
+          echo "$ANDROID_SDK_ROOT/cmdline-tools/latest/bin" >> $GITHUB_PATH
 
-      - name: Setup Android SDK
-        uses: android-actions/setup-android@v4
-        # 不指定 cmdline-tools-version，使用默认的 20.0 版本
+      # 验证 sdkmanager 能正常运行
+      - name: Verify sdkmanager
+        run: |
+          which sdkmanager
+          sdkmanager --version
 
-      - name: Accept licenses and install platforms
+      # 安装你需要的 platform
+      - name: Install required SDK packages
         run: |
           yes | sdkmanager --licenses || true
-          sdkmanager "platform-tools" "platforms;android-35" "build-tools;35.0.0"
+          sdkmanager "platforms;android-35" "build-tools;35.0.0"
 
       - name: Grant execute permission for gradlew
         run: chmod +x gradlew
